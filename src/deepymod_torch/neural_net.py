@@ -94,7 +94,7 @@ def train(data, target, network, coeff_vector_list, sparsity_mask_list, library_
     l1 = optim_config['lambda']
     library_function = library_config['type']
 
-    optimizer = torch.optim.Adam([{'params': network.parameters(), 'lr': 0.00}, {'params': coeff_vector_list, 'lr': 0.0025}])
+    optimizer = torch.optim.Adam([{'params': network.parameters(), 'lr': 0.001}, {'params': coeff_vector_list, 'lr': 0.0025}])
 
     # preparing tensorboard writer
     writer = SummaryWriter()
@@ -195,7 +195,7 @@ def train_group(data, target, network, coeff_vector_list, sparsity_mask_list, li
     l1 = optim_config['lambda']
     library_function = library_config['type']
 
-    optimizer = torch.optim.Adam([{'params': network.parameters(), 'lr': 0.005}, {'params': coeff_vector_list, 'lr': 0.005}])
+    optimizer = torch.optim.Adam([{'params': network.parameters(), 'lr': 0.001}, {'params': coeff_vector_list, 'lr': 0.005}])
 
     # preparing tensorboard writer
     writer = SummaryWriter()
@@ -259,7 +259,7 @@ def train_group(data, target, network, coeff_vector_list, sparsity_mask_list, li
         
         # Printing
     
-        if iteration % 5000 == 0:
+        if iteration % 500 == 0:
             print(iteration, "%.1E" % loss.item(), "%.1E" % loss_MSE.item(), "%.1E" % loss_reg.item(), "%.1E" % loss_l1.item())
             for coeff_vector in zip(coeff_vector_list, coeff_vector_scaled_list):
                 print(coeff_vector[0])
