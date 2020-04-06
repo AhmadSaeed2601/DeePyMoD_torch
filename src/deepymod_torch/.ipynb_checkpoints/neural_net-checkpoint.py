@@ -49,12 +49,12 @@ def deepmod_init(network_config, library_config):
 
     sample_data = torch.ones(1, input_dim, requires_grad=True)  # we run a single forward pass on fake data to infer shapes
     sample_prediction = torch_network(sample_data)
+   
     _, theta = library_function(sample_data, sample_prediction, library_config)
     total_terms = theta[0].shape[1]
 
     coeff_vector_list = [torch.randn((total_terms, 1), dtype=torch.float32, requires_grad=True) for _ in torch.arange(output_dim)]
     sparsity_mask_list = [torch.arange(total_terms) for _ in torch.arange(output_dim)]
-    print(len(coeff_vector_list))
     return torch_network, coeff_vector_list, sparsity_mask_list
 
 
@@ -94,7 +94,11 @@ def train(data, target, network, coeff_vector_list, sparsity_mask_list, library_
     l1 = optim_config['lambda']
     library_function = library_config['type']
 
+<<<<<<< HEAD
     optimizer = torch.optim.Adam([{'params': network.parameters(), 'lr': 0.001}, {'params': coeff_vector_list, 'lr': 0.0025}])
+=======
+    optimizer = torch.optim.Adam([{'params': network.parameters(), 'lr': 0.005}, {'params': coeff_vector_list, 'lr': 0.005}])
+>>>>>>> 378dfdad55b9d90314cb60b1d5d481b64b16e078
 
     # preparing tensorboard writer
     writer = SummaryWriter()
@@ -195,7 +199,11 @@ def train_group(data, target, network, coeff_vector_list, sparsity_mask_list, li
     l1 = optim_config['lambda']
     library_function = library_config['type']
 
+<<<<<<< HEAD
     optimizer = torch.optim.Adam([{'params': network.parameters(), 'lr': 0.001}, {'params': coeff_vector_list, 'lr': 0.005}])
+=======
+    optimizer = torch.optim.Adam([{'params': network.parameters(), 'lr': 0.001, 'betas':(0.9, 0.99)}, {'params': coeff_vector_list, 'lr': 0.001, 'betas':(0.9, 0.99)}])
+>>>>>>> 378dfdad55b9d90314cb60b1d5d481b64b16e078
 
     # preparing tensorboard writer
     writer = SummaryWriter()
@@ -206,7 +214,10 @@ def train_group(data, target, network, coeff_vector_list, sparsity_mask_list, li
     for iteration in np.arange(max_iterations):
         # Calculating prediction and library
         prediction = network(data)
+      #  print(prediction.shape)
         time_deriv_list, theta_list = library_function(data, prediction, library_config)
+      #  print(time_deriv_list)
+      #  print(len(theta_list))
         sparse_theta_list = [theta[:, sparsity_mask] for theta, sparsity_mask in zip(theta_list, sparsity_mask_list)]
         
         # Scaling
@@ -223,17 +234,17 @@ def train_group(data, target, network, coeff_vector_list, sparsity_mask_list, li
 
         # Calculating L1
         
-  #      l1_cost_list = torch.sqrt(torch.sum(torch.cat(coeff_vector_scaled_list, dim=1)**2, dim=1))
+        l1_cost_list = torch.sqrt(torch.sum(torch.cat(coeff_vector_scaled_list, dim=1)**2, dim=1))
       
-    #    loss_l1 = l1 * torch.sum(l1_cost_list)
+        loss_l1 = l1 * torch.sum(l1_cost_list)
 
         
         # Calculating L1
-        l1_cost_list = torch.stack([torch.sum(torch.abs(coeff_vector_scaled)) for coeff_vector_scaled in coeff_vector_scaled_list])
-        loss_l1 = l1 * torch.sum(l1_cost_list)
+        l1_cost_list_g = torch.stack([torch.sum(torch.abs(coeff_vector_scaled)) for coeff_vector_scaled in coeff_vector_scaled_list])
+        loss_l1_group = l1 * torch.sum(l1_cost_list_g)
         
         # Calculating total loss
-        loss = loss_MSE + loss_reg + loss_l1
+        loss = loss_MSE + loss_reg + loss_l1 + loss_l1_group
 
         # Optimizer step
         optimizer.zero_grad()
@@ -259,8 +270,13 @@ def train_group(data, target, network, coeff_vector_list, sparsity_mask_list, li
         
         # Printing
     
+<<<<<<< HEAD
         if iteration % 500 == 0:
             print(iteration, "%.1E" % loss.item(), "%.1E" % loss_MSE.item(), "%.1E" % loss_reg.item(), "%.1E" % loss_l1.item())
+=======
+        if iteration % 1000 == 0:
+            print(iteration, "%.1E" % loss.item(), "%.1E" % loss_MSE.item(), "%.1E" % loss_reg.item(), "%.1E" % loss_l1.item(), "%.1E" % loss_l1_group.item())
+>>>>>>> 378dfdad55b9d90314cb60b1d5d481b64b16e078
             for coeff_vector in zip(coeff_vector_list, coeff_vector_scaled_list):
                 print(coeff_vector[0])
 
