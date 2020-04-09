@@ -23,6 +23,6 @@ class Fitting(nn.Module):
         sparse_theta = self.apply_mask(input)
         return sparse_theta, self.coeff_vector
 
-    def apply_mask(self, theta):
-        sparse_theta = [theta[:, sparsity_mask] for sparsity_mask in self.sparsity_mask]
+    def apply_mask(self, thetas):
+        sparse_theta = [theta[:, sparsity_mask] for theta, sparsity_mask in zip(thetas,self.sparsity_mask)]
         return sparse_theta

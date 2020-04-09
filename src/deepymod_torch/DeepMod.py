@@ -31,7 +31,7 @@ class DeepMod(nn.Module):
 
     def build_fit_layer(self, n_in, n_out, library_function, library_args):
         sample_input = torch.ones((1, n_in), dtype=torch.float32, requires_grad=True)
-        n_terms = self.library((self.network(sample_input), sample_input))[1].shape[1] # do sample pass to infer shapes
+        n_terms = self.library((self.network(sample_input), sample_input))[1][0].shape[1] # do sample pass to infer shapes
         fit_layer = Fitting(n_terms, n_out)
 
         return fit_layer

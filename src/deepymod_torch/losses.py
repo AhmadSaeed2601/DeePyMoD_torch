@@ -18,9 +18,10 @@ def l1_loss(coeff_vector_list, l1):
     loss = torch.stack([torch.sum(torch.abs(coeff_vector)) for coeff_vector in coeff_vector_list])
     return l1 * loss
    
-    
-
-
+def group_loss(coeff_vector_list,l2):
+    cost_list_g = torch.stack([torch.sum(torch.abs(coeff_vector)) for coeff_vector in coeff_vector_list])
+    loss = torch.sum(cost_list_g)
+    return l2 * loss
 
  
   

@@ -1,8 +1,8 @@
 import torch
 import time
 
-from deepymod_torch.output import Tensorboard, progress
-from deepymod_torch.losses import reg_loss, mse_loss, l1_loss
+from deepymod_torch.output import Tensorboard, progress, progress_group
+from deepymod_torch.losses import reg_loss, mse_loss, l1_loss, group_loss
 from deepymod_torch.sparsity import scaling, threshold
 
 def train(model, data, target, optimizer, max_iterations, loss_func_args={'l1':1e-5}):
@@ -83,3 +83,34 @@ def train_deepmod(model, data, target, optimizer, max_iterations, loss_func_args
     print() #empty line for correct printing
     train(model, data, target, optimizer, max_iterations, dict(loss_func_args, **{'l1': 0.0}))
 
+
+def train_group(model, data, target, optimizer, max_iterations, loss_func_args={'l1':1e-5, 'l2':1e-5}):
+    '''Trains the deepmod model with MSE, regression and l1 cost function. Updates model in-place.'''
+    start_time = time.time()
+    number_of_terms = [coeff_vec.shape[0] for coeff_vec in model(data)[3]]
+    board = Tensorboard(number_of_terms)
+
+    # Training
+    print('| Iteration | Progress | Time remaining |     Cost |      MSE |      Reg |       L1 |       Lg |')
+    for iteration in torch.arange(0, max_iterations + 1):
+        # Calculating prediction and library and scaling
+        prediction, time_deriv_list, sparse_theta_list, coeff_vector_list = model(data)
+        coeff_vector_scaled_list = scaling(coeff_vector_list, sparse_theta_list, time_deriv_list) 
+        
+        # Calculating loss
+        loss_reg = reg_loss(time_deriv_list, sparse_theta_list, coeff_vector_list)
+        loss_mse = mse_loss(prediction, target)
+        loss_l1 = l1_loss(coeff_vector_scaled_list, loss_func_args['l1'])
+        loss_group = group_loss(coeff_vector_scaled_list, loss_func_args['l2'])
+        loss = torch.sum(loss_reg) + torch.sum(loss_mse) + torch.sum(loss_l1) + torch.sum(loss_group)
+        
+        # Writing
+        if iteration % 100 == 0:
+            progress_group(iteration, start_time, max_iterations, loss.item(), torch.sum(loss_mse).item(), torch.sum(loss_reg).item(), torch.sum(loss_l1).item(), torch.sum(loss_group).item())
+            board.write(iteration, loss, loss_mse, loss_reg, loss_l1, coeff_vector_list, coeff_vector_scaled_list)
+
+        # Optimizer step
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+    board.close()
